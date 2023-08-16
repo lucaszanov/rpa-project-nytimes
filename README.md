@@ -55,6 +55,8 @@ Main libraries used in this project (also available in <code>requirements.txt</c
 - urllib3==2.0.2
 - webdriver-manager==3.8.6
 
+Python version: 3.11
+
 # Configuration file
 The <code>config.ini</code> file is located in the <code>config</code> folder
 and contains all the configuration parameters divided by section:
@@ -73,3 +75,7 @@ website <url>http://www.nytimes.com</url>;</li>
 regex structures</li>
 </ul>
 
+# Future improvements
+- Generate an .exe file to be more user-friendly with a Tkinter Interface;
+- Use Docker to ensure functional application in other environments;
+- Improve exception handling in code to avoid robot crashes.

@@ -1,0 +1,5 @@
+2023-08-15 21:06:30,434 - INFO - ====== WebDriver manager ======
+2023-08-15 21:06:30,891 - INFO - Driver [C:\Users\Usuário\.wdm\drivers\chromedriver\win32\114.0.5735\chromedriver.exe] found in cache
+2023-08-15 21:06:35,535 - INFO - Accepting terms
+2023-08-15 21:06:40,713 - INFO - Closing cookies popup
+2023-08-15 21:06:41,783 - INFO - Filtering sections: ['Books', 'Fashion', 'Movies', 'Opinion', 'U.S.']

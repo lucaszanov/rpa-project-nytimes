@@ -97,17 +97,25 @@ class GetAttributes:
                      "day": "",
                      "month": "",
                      "year": "",
-                     "money_bool": False
+                     "money_bool": False,
+                     "count_search_phrase": 0
                 }
                 )
             except Exception as error:
                 print(error)
         self.get_dates()
         self.get_money_bool()
+        self.get_count_sf_title_description()
         return self.list_data
 
     def get_count_sf_title_description(self):
-        pass
+        for data in self.list_data:
+            try:
+                data["count_search_phrase"] = \
+                    len(re.findall(fr"\b{self.search_phrase.lower()}\b", data["description"].lower())) + \
+                    len(re.findall(fr"\b{self.search_phrase.lower()}\b", data["title"].lower()))
+            except:
+                pass
 
     def get_money_bool(self):
         '''

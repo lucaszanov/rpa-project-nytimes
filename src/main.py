@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 import re
 from datetime import datetime
 from tqdm import tqdm
+import logging
 
 class Main:
 
@@ -24,7 +25,6 @@ class Main:
         self.timesleephigh = int(self.config['general_parameters']['timesleephigh'])
         self.folder_name_outputs = self.config['general_parameters']['folder_name_outputs']
         self.folder_name_images = self.config['general_parameters']['folder_name_images']
-
         self.url_website = self.config['website_parameters']['url_website']
         self.search_phrase = self.config['input_parameters']['search_phrase']
         self.news_section = self.config['input_parameters']['news_sections']
@@ -44,10 +44,18 @@ class Main:
         self.xpath_sections_boxes = self.config['website_parameters'][
             'xpath_sections_boxes']
 
+    def create_log_file(self):
+        logging.basicConfig(filename=os.path.join(self.parent_path, self.folder_name_outputs,
+                            self.date_now, f'{self.date_now}.log'),
+                            level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
+                            encoding='utf-8')
+        self.logger = logging
+
     def get_driver(self):
         self.driver=Utilities().access_url_via_driver(url=self.url_website,service='chrome')
 
     def accept_terms(self):
+        self.logger.info('Accepting terms')
         max_trials=5
         trials=0
         buttons = self.driver.find_elements(By.TAG_NAME, "button")
@@ -61,12 +69,14 @@ class Main:
             time.sleep(self.timesleepmedium)
 
     def close_cookies(self):
+        self.logger.info('Closing cookies popup')
         close_cookies_button = self.driver.find_elements(
             By.XPATH, f"//button[@{self.default_search_attribute}='{self.xpath_close_cookies_button}']")
         close_cookies_button[0].click()
         time.sleep(self.timesleeplow)
 
     def filter_sections(self):
+        self.logger.info(f'Filtering sections: {self.news_section}')
         sections_button = self.driver.find_elements(
             By.XPATH, f"//button[@{self.default_search_attribute}='{self.xpath_sections_button}']")
         sections_button[0].click()
@@ -94,6 +104,7 @@ class Main:
 
     def main(self):
         self.create_images_folders()
+        self.create_log_file()
         self.get_driver()
         self.accept_terms()
         self.close_cookies()

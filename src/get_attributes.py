@@ -59,6 +59,7 @@ class GetAttributes:
                                                          self.number_months-1)
 
     def get_last_date_available(self):
+        time.sleep(self.timesleepmedium)
         search_result_elements = self.driver.find_elements(By.XPATH,
                   f"//ol[@{self.default_search_attribute}='{self.xpath_cards}']/li")
         date_ = ""

@@ -10,6 +10,7 @@ import logging
 from download_pics import DownloadPics
 from export_excel import ExportExcel
 from get_attributes import GetAttributes
+import pandas as pd
 
 class Main:
 
@@ -141,14 +142,17 @@ class Main:
             print(f"Error: {filter_sections_[1]}")
             return f"Error: {filter_sections_[1]}"
         list_data=GetAttributes(self.driver, self.logger).main()
-        for data in tqdm(list_data):
-            print(f'Collected data: {data}')
-            print(f'Downloading pic: {data["pic_file_name"]}')
-            self.logger.info(f'Downloading pic: {data["pic_file_name"]}')
-            DownloadPics().download_pic(data["pic_url"],
-                                        os.path.join(self.parent_path,self.folder_name_outputs,
-                                          self.date_now,self.folder_name_images,
-                                         data["pic_file_name"]))
+        date_criteria=ExportExcel().get_month_date_criteria()
+        for data in list_data:
+            if f'{data["datetime"].year}-{data["datetime"].month}-{data["datetime"].day}'>=\
+             f'{date_criteria.year}-{date_criteria.month}-{date_criteria.day}':
+                print(f'Collected data: {data}')
+                print(f'Downloading pic: {data["pic_file_name"]}')
+                self.logger.info(f'Downloading pic: {data["pic_file_name"]}')
+                DownloadPics().download_pic(data["pic_url"],
+                                            os.path.join(self.parent_path,self.folder_name_outputs,
+                                            self.date_now,self.folder_name_images,
+                                            data["pic_file_name"]))
         time.sleep(self.timesleepmedium)
         print(f'Exporting results to Excel file: {self.date_now+".xlsx"}')
         self.logger.info(f'Exporting results to Excel file: {self.date_now+".xlsx"}')

@@ -35,3 +35,41 @@ The main steps:
     > 
 6. Download the news picture and specify the file name in the Excel file
 7. Follow steps 4-6 for all news that falls within the required time period
+
+# Project structure
+The project is divided in three folders:
+<ul>
+<li><code>config</code>: configuration files;</li>
+<li><code>outputs</code>: output folders generated using current datetime for unique folders
+and containing the Excel file, a log file and the images folder with all images
+downloaded;</li>
+<li><code>src</code>: folder containing all scripts</li>
+</ul>
+
+# Libraries
+Main libraries used in this project (also available in <code>requirements.txt</code>):
+- openpyxl==3.1.2
+- pandas==2.0.2
+- selenium==4.9.1
+- tqdm==4.65.0
+- urllib3==2.0.2
+- webdriver-manager==3.8.6
+
+# Configuration file
+The <code>config.ini</code> file is located in the <code>config</code> folder
+and contains all the configuration parameters divided by section:
+
+<ul>
+<li>website_parameters: URLs, xpaths, ids and parameters related to the 
+website <url>http://www.nytimes.com</url>;</li>
+<li>input_parameters: the configured variables by user:
+    <ul>
+        <li>search phrase: must be separated by space;</li>
+        <li>news category or section: must be a list, eg: [Books,Fashion,Movies,Opinion,U.S.];</li>
+        <li>number of months for which you need to receive news: must be an integer</li>
+    </ul></li>
+<li>browser_parameters: basically the chrome version;</li>
+<li>general_parameters: folders path, time to wait on clicks and
+regex structures</li>
+</ul>
+

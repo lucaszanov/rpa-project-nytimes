@@ -28,9 +28,6 @@ class Main:
         self.url_website = self.config['website_parameters']['url_website']
         self.search_phrase = self.config['input_parameters']['search_phrase']
         self.news_section = self.config['input_parameters']['news_sections']
-        self.news_section=self.news_section.replace("[", "").replace("]", "").replace(
-            " ", "")
-        self.news_section=self.news_section.split(",")
         self.number_months = self.config['input_parameters']['number_months']
         self.url_website=self.url_website.replace("$TERM",self.search_phrase.replace(" ","+"))
         self.xpath_close_cookies_button = self.config['website_parameters'][
@@ -44,6 +41,19 @@ class Main:
         self.xpath_sections_boxes = self.config['website_parameters'][
             'xpath_sections_boxes']
 
+    def validate_inputs(self):
+        try:
+            self.number_months=int(self.number_months)
+        except Exception as error:
+            return ["error", f"Error validating number_months. Msg: {error}"]
+        try:
+            self.news_section = self.news_section.replace("[", "").replace("]", "").replace(
+                " ", "")
+            self.news_section = self.news_section.split(",")
+        except Exception as error:
+            return ["error", f"Error validating news_section. Msg: {error}"]
+        return ["success",""]
+
     def create_log_file(self):
         logging.basicConfig(filename=os.path.join(self.parent_path, self.folder_name_outputs,
                             self.date_now, f'{self.date_now}.log'),
@@ -55,6 +65,7 @@ class Main:
         self.driver=Utilities().access_url_via_driver(url=self.url_website,service='chrome')
 
     def accept_terms(self):
+        print('Accepting terms')
         self.logger.info('Accepting terms')
         max_trials=5
         trials=0
@@ -69,6 +80,7 @@ class Main:
             time.sleep(self.timesleepmedium)
 
     def close_cookies(self):
+        print('Closing cookies popup')
         self.logger.info('Closing cookies popup')
         close_cookies_button = self.driver.find_elements(
             By.XPATH, f"//button[@{self.default_search_attribute}='{self.xpath_close_cookies_button}']")
@@ -76,6 +88,7 @@ class Main:
         time.sleep(self.timesleeplow)
 
     def filter_sections(self):
+        print(f'Filtering sections: {self.news_section}')
         self.logger.info(f'Filtering sections: {self.news_section}')
         sections_button = self.driver.find_elements(
             By.XPATH, f"//button[@{self.default_search_attribute}='{self.xpath_sections_button}']")
@@ -89,9 +102,12 @@ class Main:
                 section = re.sub(r'\d+\.?\d*', '', section)
                 if section in self.news_section:
                     print(f'Selecting {section}')
+                    self.logger.info(f'Selecting {section}')
                     element.click()
             except Exception as error:
-                print(error)
+                msg = f'Error filtering sections. Msg: {error}'
+                print(msg)
+                self.logger.error(msg)
         time.sleep(self.timesleeplow)
 
     def create_images_folders(self):
@@ -103,22 +119,30 @@ class Main:
                                   self.folder_name_images))
 
     def main(self):
+        print(f'\n============================= Execution Initialized =============================\n')
+        if self.validate_inputs()[0]!="success":
+            return f"Error: {self.validate_inputs()[1]}"
         self.create_images_folders()
         self.create_log_file()
         self.get_driver()
         self.accept_terms()
         self.close_cookies()
         self.filter_sections()
-        list_data=GetAttributes(self.driver).main()
+        list_data=GetAttributes(self.driver, self.logger).main()
         for data in tqdm(list_data):
-            print(data)
+            print(f'Collected data: {data}')
+            print(f'Downloading pic: {data["pic_file_name"]}')
+            self.logger.info(f'Downloading pic: {data["pic_file_name"]}')
             DownloadPics().download_pic(data["pic_url"],
                                         os.path.join(self.parent_path,self.folder_name_outputs,
                                           self.date_now,self.folder_name_images,
                                          data["pic_file_name"]))
         time.sleep(self.timesleepmedium)
+        print(f'Exporting results to Excel file: {self.date_now+".xlsx"}')
+        self.logger.info(f'Exporting results to Excel file: {self.date_now+".xlsx"}')
         ExportExcel().export_excel_file(list_data,os.path.join(
             self.parent_path,self.folder_name_outputs,self.date_now,self.date_now+".xlsx"))
+        print(f'\n============================= Execution Finalized =============================\n')
 
 if __name__ == "__main__":
     Main().main()

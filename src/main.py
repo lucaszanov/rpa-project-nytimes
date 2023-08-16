@@ -2,14 +2,14 @@ from configparser import RawConfigParser
 import os
 import time
 from utilities import Utilities
-from download_pics import DownloadPics
-from export_excel import ExportExcel
-from get_attributes import GetAttributes
 from selenium.webdriver.common.by import By
 import re
 from datetime import datetime
 from tqdm import tqdm
 import logging
+from download_pics import DownloadPics
+from export_excel import ExportExcel
+from get_attributes import GetAttributes
 
 class Main:
 
@@ -62,21 +62,21 @@ class Main:
         self.logger = logging
 
     def get_driver(self):
-        self.driver=Utilities().access_url_via_driver(url=self.url_website,service='chrome')
+        self.driver = Utilities().access_url_via_driver(url=self.url_website,service='chrome')
 
     def accept_terms(self):
         print('Accepting terms')
         self.logger.info('Accepting terms')
-        max_trials=5
-        trials=0
+        max_trials = 10
+        trials = 0
         buttons = self.driver.find_elements(By.TAG_NAME, "button")
-        while trials<max_trials:
+        while trials < max_trials:
             for button in buttons:
-                if button.text.lower()==self.innertext_accept_terms_button:
+                if button.text.lower() == self.innertext_accept_terms_button:
                     button.click()
-                    trials=max_trials
+                    trials = max_trials
                     break
-            trials+=1
+            trials += 1
             time.sleep(self.timesleepmedium)
 
     def close_cookies(self):
@@ -96,19 +96,26 @@ class Main:
         time.sleep(self.timesleeplow)
         search_result_elements = self.driver.find_elements(By.XPATH,
                    f"//ul[@{self.default_search_attribute}='{self.xpath_sections_boxes}']/li")
+        if search_result_elements==[]:
+            return ["error", f"No sections available. No results"]
         for element in search_result_elements:
             try:
                 section = element.text
                 section = re.sub(r'\d+\.?\d*', '', section)
-                if section in self.news_section:
+                if section.lower() in [x.lower() for x in self.news_section]:
                     print(f'Selecting {section}')
                     self.logger.info(f'Selecting {section}')
                     element.click()
+                else:
+                    print(f'Section {section} available but not selected')
+                    self.logger.info(f'Section {section} available but not selected')
             except Exception as error:
                 msg = f'Error filtering sections. Msg: {error}'
                 print(msg)
                 self.logger.error(msg)
         time.sleep(self.timesleeplow)
+        print('-'*50)
+        return ["success", f""]
 
     def create_images_folders(self):
         if not os.path.exists(os.path.join(self.parent_path,self.folder_name_outputs,self.date_now)):
@@ -120,14 +127,19 @@ class Main:
 
     def main(self):
         print(f'\n============================= Execution Initialized =============================\n')
-        if self.validate_inputs()[0]!="success":
-            return f"Error: {self.validate_inputs()[1]}"
+        validate_inputs_ = self.validate_inputs()
+        if validate_inputs_[0] != "success":
+            print(f"Error: {validate_inputs_[1]}")
+            return f"Error: {validate_inputs_[1]}"
         self.create_images_folders()
         self.create_log_file()
         self.get_driver()
         self.accept_terms()
         self.close_cookies()
-        self.filter_sections()
+        filter_sections_ = self.filter_sections()
+        if filter_sections_[0] != "success":
+            print(f"Error: {filter_sections_[1]}")
+            return f"Error: {filter_sections_[1]}"
         list_data=GetAttributes(self.driver, self.logger).main()
         for data in tqdm(list_data):
             print(f'Collected data: {data}')

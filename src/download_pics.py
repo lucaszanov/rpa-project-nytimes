@@ -6,4 +6,5 @@ class DownloadPics:
         pass
 
     def download_pic(self, url, filename):
-        urllib.request.urlretrieve(url, filename)
+        pass
+        # urllib.request.urlretrieve(url, filename)

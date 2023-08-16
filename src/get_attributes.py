@@ -4,14 +4,15 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
-from datetime import datetime
+from datetime import datetime, date
 import re
 import logging
+from dateutil.relativedelta import relativedelta
 
 class GetAttributes:
 
     def __init__(self, driver, logger):
-        self.driver=driver
+        self.driver = driver
         self.config = RawConfigParser()
         self.path_config = os.path.join(os.path.abspath(os.path.join(os.getcwd(),
                                                                      os.pardir)), 'config')
@@ -23,6 +24,7 @@ class GetAttributes:
         self.search_phrase = self.config['input_parameters']['search_phrase']
         self.news_section = self.config['input_parameters']['news_sections']
         self.number_months = self.config['input_parameters']['number_months']
+        self.number_months = int(self.number_months)
         self.default_search_attribute = self.config['website_parameters'][
             'default_search_attribute']
         self.xpath_cards = self.config['website_parameters'][
@@ -49,6 +51,55 @@ class GetAttributes:
             "Dec.": 12
         }
 
+    def get_month_date_criteria(self):
+        if self.number_months == 0 or self.number_months == 1:
+            return date(datetime.now().year, datetime.now().month, 1)
+        else:
+            return date(datetime.now().year, datetime.now().month, 1)-relativedelta(months=
+                                                         self.number_months-1)
+
+    def get_last_date_available(self):
+        search_result_elements = self.driver.find_elements(By.XPATH,
+                  f"//ol[@{self.default_search_attribute}='{self.xpath_cards}']/li")
+        date_ = ""
+        for index in range(len(search_result_elements)-1, -1, -1):
+            if date_ == "":
+                try:
+                    date_ = search_result_elements[index].find_elements(By.TAG_NAME, "span")[0].text
+                    try:
+                        if "ago" in date_:
+                            month = datetime.now().month
+                            day = datetime.now().day
+                            year = datetime.now().year
+                            date_ = date(year, month, day)
+                        else:
+                            data_split = date_.split(" ")
+                            if len(data_split) == 2:
+                                day = int(data_split[1])
+                                month = self.dict_month[data_split[0]]
+                                year = datetime.now().year
+                                date_ = date(year, month, day)
+                            else:
+                                day = int(data_split[1])
+                                month = self.dict_month[data_split[0]]
+                                year = int(data_split[2])
+                                date_ = date(year, month, day)
+                        return date_
+                    except Exception as error:
+                        print(f'Error: {error}')
+                except Exception as error:
+                    print(f'Error: {error}')
+
+    def preparing_cards_to_extract(self):
+        date_criteria = self.get_month_date_criteria()
+        last_date_available = self.get_last_date_available()
+        while date_criteria <= last_date_available:
+            click_show_more_results_ = self.click_show_more_results()
+            if click_show_more_results_[0] == "error":
+                return ["success", f""]
+            last_date_available = self.get_last_date_available()
+        return ["success", f""]
+
     def get_dates(self):
         print('Getting dates')
         self.logger.info('Getting dates')
@@ -58,16 +109,19 @@ class GetAttributes:
                     data["month"] = datetime.now().month
                     data["day"] = datetime.now().day
                     data["year"] = datetime.now().year
+                    data["datetime"] = date(data["year"], data["month"], data["day"])
                 else:
                     data_split = data["date"].split(" ")
                     if len(data_split) == 2:
-                        data["day"] = data_split[1]
+                        data["day"] = int(data_split[1])
                         data["month"] = self.dict_month[data_split[0]]
                         data["year"] = datetime.now().year
+                        data["datetime"] = date(data["year"], data["month"], data["day"])
                     else:
-                        data["day"] = data_split[1]
+                        data["day"] = int(data_split[1])
                         data["month"] = self.dict_month[data_split[0]]
-                        data["year"] = data_split[2]
+                        data["year"] = int(data_split[2])
+                        data["datetime"] = date(data["year"], data["month"], data["day"])
             except:
                 pass
 
@@ -79,8 +133,9 @@ class GetAttributes:
                 By.XPATH, f"//button[@{self.default_search_attribute}='{self.xpath_show_more_button}']")
             show_more_button[0].click()
             time.sleep(self.timesleeplow)
-        except:
-            pass
+            return ["success", f""]
+        except Exception as error:
+            return ["error", f"No button available. Msg: {error}"]
 
     def get_info_card(self):
         print('Getting info from cards')
@@ -147,4 +202,5 @@ class GetAttributes:
                 pass
 
     def main(self):
+        self.preparing_cards_to_extract()
         return self.get_info_card()
